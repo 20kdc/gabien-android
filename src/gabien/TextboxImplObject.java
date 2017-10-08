@@ -35,15 +35,17 @@ public class TextboxImplObject {
 
             @Override
             public void afterTextChanged(Editable s) {
-                String p = s.toString();
-                boolean disableOkay = false;
-                if (p.contains("\n")) {
-                    p = p.replace("\n", "");
-                    disableOkay = true;
+                if (okay) {
+                    String p = s.toString();
+                    boolean disableOkay = false;
+                    if (p.contains("\n")) {
+                        p = p.replace("\n", "");
+                        disableOkay = true;
+                    }
+                    lastKnownContents = p;
+                    if (disableOkay)
+                        okay = false;
                 }
-                lastKnownContents = p;
-                if (disableOkay)
-                    okay = false;
             }
         });
         tf.setSingleLine(true);
@@ -66,8 +68,8 @@ public class TextboxImplObject {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mainActivity.setContentView(tf);
                 tf.setText(contents);
+                mainActivity.setContentView(tf);
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

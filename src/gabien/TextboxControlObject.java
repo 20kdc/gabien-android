@@ -13,6 +13,7 @@ public class TextboxControlObject {
 
     String tempMTO = null;
     boolean pendingEnter = false;
+    int timeout = 0;
 
     public TextboxControlObject(MainActivity activity) {
         tf = new TextboxImplObject(activity);
@@ -27,6 +28,10 @@ public class TextboxControlObject {
         boolean halfFlush = false;
         boolean enterPress = false;
         if (i == 0) {
+            if (timeout > 0) {
+                timeout--;
+                return text;
+            }
             if (lastMaintainText != null) {
                 if (!text.equals(lastMaintainText)) {
                     tf.setActive(text);
@@ -43,6 +48,7 @@ public class TextboxControlObject {
                 String s = tempMTO;
                 tempMTO = null;
                 pendingEnter = true;
+                timeout = 4;
                 return s;
             }
             return tf.lastKnownContents;
