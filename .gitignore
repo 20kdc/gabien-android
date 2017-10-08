@@ -1,0 +1,11 @@
+*
+
+!res
+!res/values
+!res/values/*
+!src
+!src/gabien
+!src/gabien/*.java
+!AndroidManifest.xml
+!README.md
+!.gitignore
