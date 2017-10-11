@@ -12,9 +12,11 @@ Good luck. I advise you NOT to use the same package name for whatever you're doi
 
 ## License
 
-    This is released into the public domain.
-    No warranty is provided, implied or otherwise.
+    gabien-android - gabien backend for Android
+    Written starting in 2016 by contributors (see CREDITS.txt)
+    To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+    You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 ## Versioning
 
-This version of gabien-android is known to work with gabien-common ea2fac068011b7e5da872fc04c0a0df1c463164e, and R48 8a8630e5eb47d9ebd45fdfdc778a104d3d778cdf
+This version of gabien-android is known to work with gabien-common 6df2c10f66d91fb14a73a0b5de577d0811e811a4, and R48 cd6cc53a77235213c912f58da94b2f167d5f2b23
