@@ -117,6 +117,10 @@ public final class GaBIenImpl implements IGaBIEn {
     	}
     }
 
+    public void rmFile(String f) {
+        getFileObj(f).delete();
+    }
+
     public IGrInDriver makeGrIn(String name, int w, int h, WindowSpecs ws) {
         if (GrInDriver.instance == null)
         	GrInDriver.instance = new GrInDriver(w, h);

@@ -6,6 +6,8 @@
 !src
 !src/gabien
 !src/gabien/*.java
-!AndroidManifest.xml
+!AndroidManifestTemplate.xml
 !README.md
+!COPYING.txt
+!releaser.sh
 !.gitignore
