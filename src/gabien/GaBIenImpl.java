@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Paint;
 
+import gabien.ui.UILabel;
 import java.io.*;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -28,6 +29,7 @@ public final class GaBIenImpl implements IGaBIEn {
     private RawAudioDriver rad;
 
     public static void main() throws Exception {
+        UILabel.fontOverride = "Nautilus";
     	GaBIEn.internal = new GaBIenImpl();
     	Class.forName("gabienapp.Application").getDeclaredMethod("gabienmain").invoke(null);
     }

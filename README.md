@@ -20,5 +20,5 @@ Good luck. I advise you NOT to use the same package name for whatever you're doi
 ## Versioning
 
 This version of gabien-android is known to work with:
- - gabien-common 6c8829dad08685d761142ddb043136a97efab60
- - R48 780fe7e750b8ffc1a1b09ca63227479a3864789e
+ - gabien-common 370070d6baaf1d5dc8f470dd615e056528eb67b9
+ - R48 59aa2f4ab2caa8b9c5bef8d08fb5743456de2ec9
