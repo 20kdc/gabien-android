@@ -8,7 +8,18 @@ Provides graphics, sound, single-touch input and text input (no keyboard).
 
 ## Build Instructions
 
-Good luck. I advise you NOT to use the same package name for whatever you're doing, or the same app name. That is all.
+Good luck. I advise you NOT to use the same package name for whatever you're doing, or the same app name.
+
+A script like the following should suffice:
+
+    rm -rf staging
+    gradle build &&
+    mkdir staging &&
+    cd staging &&
+    unzip -o ../../gabien-common/build/libs/gabien-common.jar &&
+    unzip -o ../build/libs/gabien-app-santa.jar &&
+    cd ../../gabien-android &&
+    ./releaser.sh SANTA claus.santa v0.1 1 ../gabien-app-santa/staging ../gabien-app-santa/icon.png android.permission.INTERNET,android.permission.WRITE_EXTERNAL_STORAGE
 
 ## License
 
@@ -20,5 +31,5 @@ Good luck. I advise you NOT to use the same package name for whatever you're doi
 ## Versioning
 
 This version of gabien-android is known to work with:
- - gabien-common 370070d6baaf1d5dc8f470dd615e056528eb67b9
- - R48 59aa2f4ab2caa8b9c5bef8d08fb5743456de2ec9
+ - gabien-common 6863ea62a83a552582fcf91b644d6006fff3d11a
+ - R48 417bb6d5a1cd8b5648bdd7cb165d42530403edd2

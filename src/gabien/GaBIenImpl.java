@@ -29,7 +29,7 @@ public final class GaBIenImpl implements IGaBIEn {
     private RawAudioDriver rad;
 
     public static void main() throws Exception {
-        UILabel.fontOverride = "Nautilus";
+        FontManager.fontsReady = true;
     	GaBIEn.internal = new GaBIenImpl();
     	Class.forName("gabienapp.Application").getDeclaredMethod("gabienmain").invoke(null);
     }
@@ -141,19 +141,23 @@ public final class GaBIenImpl implements IGaBIEn {
         return ws;
     }
 
-    private IImage getImageInternal(String a, String id, int i) {
+    private IImage getImageInternal(String a, boolean res, String id, boolean ck, int i) {
         if (ht.containsKey(id))
             return ht.get(id);
         IImage r = GaBIEn.getErrorImage();
         try {
-            Bitmap b = BitmapFactory.decodeStream(GaBIEn.getFile(a));
+            Bitmap b = BitmapFactory.decodeStream(res ? getResource(a) : getFile(a));
             int w = b.getWidth();
             int h = b.getHeight();
             int[] data = new int[w * h];
             b.getPixels(data, 0, w, 0, 0, w, h);
-            for (int j = 0; j < data.length; j++)
-                if ((data[j] & 0xFFFFFF) == i)
-                    data[j] = 0;
+            if (ck)
+                for (int j = 0; j < data.length; j++)
+                    if ((data[j] & 0xFFFFFF) == i) {
+                        data[j] = 0;
+                    } else {
+                        data[j] |= 0xFF000000;
+                    }
             r = new OsbDriver(w, h, data);
         } catch (Exception e) {
             e.printStackTrace();
@@ -164,16 +168,16 @@ public final class GaBIenImpl implements IGaBIEn {
 
 
     @Override
-    public IImage getImage(String a) {
-        return getImageInternal(a, "~" + a, -1);
+    public IImage getImage(String a, boolean res) {
+        return getImageInternal(a, res, (res ? 'R' : 'F') + "~" + a, false, -1);
     }
 
     @Override
-    public IImage getImageCK(String a, int r, int g, int b) {
+    public IImage getImageCK(String a, boolean res, int r, int g, int b) {
         r &= 0xFF;
         g &= 0xFF;
         b &= 0xFF;
-        return getImageInternal(a, "X" + r + " " + g + " " + b + "~" + a, (r << 16) | (g << 8) | b);
+        return getImageInternal(a, res, (res ? 'R' : 'F') + "X" + r + " " + g + " " + b + "~" + a, true, (r << 16) | (g << 8) | b);
     }
 
     @Override

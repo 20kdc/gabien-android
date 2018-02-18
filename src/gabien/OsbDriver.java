@@ -8,6 +8,7 @@
 package gabien;
 
 import android.graphics.*;
+import android.graphics.drawable.BitmapDrawable;
 import gabien.backendhelp.Blender;
 import gabien.backendhelp.INativeImageHolder;
 
@@ -17,6 +18,7 @@ public class OsbDriver implements INativeImageHolder, IGrDriver {
     protected Bitmap bitmap;
     private Canvas canvas;
     protected int w, h;
+    protected int[] localST;
     protected final Paint globalPaint;
 
     public OsbDriver(int w, int h, boolean alpha) {
@@ -34,20 +36,28 @@ public class OsbDriver implements INativeImageHolder, IGrDriver {
         bt.setDensity(96);
         bitmap = bt;
         canvas = new Canvas(bt);
+        canvas.save();
         globalPaint = new Paint();
         w = bt.getWidth();
         h = bt.getHeight();
+        localST = new int[6];
+        localST[4] = w;
+        localST[5] = h;
     }
 
     protected void resize(int w, int h) {
         bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         canvas = new Canvas(bitmap);
+        localST = new int[6];
+        localST[4] = w;
+        localST[5] = h;
+        canvas.save();
         this.w = w;
         this.h = h;
     }
 
     @Override
-    public Runnable[] getLockingSequence() {
+    public Runnable[] getLockingSequenceN() {
         return new Runnable[] {
                 new Runnable() {
                     @Override
@@ -97,6 +107,16 @@ public class OsbDriver implements INativeImageHolder, IGrDriver {
     }
 
     @Override
+    public void blitTiledImage(int x, int y, int w, int h, IImage cachedTile) {
+        // Deprecated because of blahblahblahdensityblah.
+        // Call the density? I AM THE DENSITY!... that makes no sense, I assume.
+        BitmapDrawable bd = new BitmapDrawable((Bitmap) (((INativeImageHolder) cachedTile).getNative()));
+        bd.setBounds(x, y, x + w, y + h);
+        bd.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        bd.draw(canvas);
+    }
+
+    @Override
     public void blitScaledImage(int srcx, int srcy, int srcw, int srch, int x, int y, int acw, int ach, IImage i) {
         canvas.drawBitmap((Bitmap) ((INativeImageHolder) i).getNative(), new Rect(srcx, srcy, srcx + srcw, srcy + srch), new Rect(x, y, x + acw, y + ach), globalPaint);
     }
@@ -128,9 +148,7 @@ public class OsbDriver implements INativeImageHolder, IGrDriver {
 
     @Override
     public void clearAll(int r, int g, int b) {
-        globalPaint.setARGB(255, r, g, b);
-        canvas.drawRect(new Rect(0, 0, w, h), globalPaint);
-        globalPaint.setARGB(255, 255, 255, 255);
+        canvas.drawRGB(r, g, b);
     }
 
     @Override
@@ -143,5 +161,18 @@ public class OsbDriver implements INativeImageHolder, IGrDriver {
     @Override
     public void shutdown() {
 
+    }
+
+    @Override
+    public int[] getLocalST() {
+        return localST;
+    }
+
+    @Override
+    public void updateST() {
+        canvas.restore();
+        canvas.save();
+        canvas.clipRect(localST[2], localST[3], localST[4], localST[5]);
+        canvas.translate(localST[0], localST[1]);
     }
 }

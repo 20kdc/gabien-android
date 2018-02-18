@@ -5,7 +5,7 @@
 # You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 # Just a boring releaser helper script.
-# name, package, version-name, version-code, app-staging
+# name, package, version-name, version-code, app-staging, icon, permissions
 
 # now for the parts that you'll probably need to adjust
 # yes, these are my personal build settings -
@@ -13,8 +13,10 @@
 ANDROID_JAR=/home/20kdc/Documents/tools/adt-bundle-linux-x86-20140702/sdk/platforms/android-20/android.jar
 ANDROID_BT=/home/20kdc/Documents/tools/adt-bundle-linux-x86-20140702/sdk/build-tools/android-4.4W
 
-sed "s/REPLACE1/$2/;s/REPLACE2/$4/;s/REPLACE3/$3/" < AndroidManifestTemplate.xml > AndroidManifest.xml &&
+cp "$6" res/drawable/icon.png
+lua compile-manifest.lua "$2" "$3" "$4" "$7" > AndroidManifest.xml
 echo "<resources><string name=\"app_name\">$1</string></resources>" > res/values/strings.xml &&
+
 mkdir -p staging staging2 &&
 rm -rf staging staging2 &&
 mkdir -p staging staging2 &&
@@ -22,7 +24,7 @@ mkdir -p staging staging2 &&
 # Now, javac all the things
 javac -source 1.6 -target 1.6 -cp "$ANDROID_JAR:$5" -d staging src/gabien/* &&
 # Merge in everything, run Dx
-cp -r $5/* staging/ &&
+cp -r "${5:-/dev/null}"/* staging/ &&
 $ANDROID_BT/dx --dex --output staging2/classes.dex staging &&
 $ANDROID_BT/aapt p -f -I $ANDROID_JAR -M AndroidManifest.xml -S res -A staging/assets -F result.apk &&
 cd staging2 &&

@@ -1,12 +1,15 @@
 *
 
 !res
+!res/drawable
+!res/drawable/hi.txt
 !res/values
-!res/values/*
+!res/values/hi.txt
 !src
 !src/gabien
 !src/gabien/*.java
 !AndroidManifestTemplate.xml
+!compile-manifest.lua
 !README.md
 !COPYING.txt
 !releaser.sh

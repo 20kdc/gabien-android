@@ -9,6 +9,7 @@ package gabien;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 import android.graphics.Canvas;
@@ -20,11 +21,13 @@ import android.view.View.OnTouchListener;
 
 public class GrInDriver extends OsbDriver implements IGrInDriver {
     public static GrInDriver instance;
-    private boolean mouseDown, mouseJustDown, mouseJustUp, enterPressed;
-    private int mouseX, mouseY;
-
+    protected boolean enterPressed;
+    public Peripherals peripherals;
+    public Object securityCode;
     public GrInDriver(int w, int h) {
         super(w, h, false);
+        peripherals = new Peripherals(this);
+        securityCode = peripherals.gdResetPointers();
     }
 
     @Override
@@ -53,25 +56,31 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
                         c.drawBitmap(bitmap, new Rect(0, 0, w, h), displayArea, globalPaint);
 
                         MainActivity.sv.setOnTouchListener(new OnTouchListener() {
-
                             @Override
                             public boolean onTouch(View arg0, MotionEvent arg1) {
                                 int acto = arg1.getAction();
                                 int act = (acto & MotionEvent.ACTION_MASK);
+                                // ACTION_POINTER_INDEX_MASK
+                                int ptrI = (acto >> 8) & 0xFF;
                                 switch (act) {
                                     case MotionEvent.ACTION_DOWN:
+                                        mapToArea(true, arg1, 0);
+                                        break;
                                     case MotionEvent.ACTION_POINTER_DOWN:
-                                        mapToArea(arg1.getX(), arg1.getY());
-                                        mouseJustDown = true;
-                                        mouseDown = true;
+                                        mapToArea(true, arg1, ptrI);
                                         break;
                                     case MotionEvent.ACTION_MOVE:
-                                        mapToArea(arg1.getX(), arg1.getY());
+                                        for (int i = 0; i < arg1.getPointerCount(); i++)
+                                            mapToArea(true, arg1, i);
                                         break;
-                                    case MotionEvent.ACTION_UP:
                                     case MotionEvent.ACTION_POINTER_UP:
-                                        mouseDown = false;
-                                        mouseJustUp = true;
+                                        mapToArea(false, arg1, ptrI);
+                                        break;
+                                        // Sent "when the last pointer leaves the screen".
+                                        // I hope you aren't lying.
+                                    case MotionEvent.ACTION_UP:
+                                        mapToArea(false, arg1, 0);
+                                        securityCode = peripherals.gdResetPointers();
                                         break;
                                     default:
                                         return true;
@@ -79,15 +88,16 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
                                 return true;
                             }
 
-                            private void mapToArea(float x, float y) {
+                            private void mapToArea(boolean mode, MotionEvent arg1, int ptrI) {
+                                float x = arg1.getX(ptrI);
+                                float y = arg1.getY(ptrI);
                                 x -= displayArea.left;
                                 y -= displayArea.top;
                                 x /= displayArea.width();
                                 y /= displayArea.height();
                                 x *= w;
                                 y *= h;
-                                mouseX = (int) x;
-                                mouseY = (int) y;
+                                peripherals.gdPushEvent(securityCode, mode, arg1.getPointerId(ptrI), (int) x, (int) y);
                             }
                         });
                         sh.unlockCanvasAndPost(c);
@@ -114,79 +124,11 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
     }
 
     @Override
-    public boolean isKeyDown(int KEYID) {
-        return false;
+    public IPeripherals getPeripherals() {
+        return peripherals;
     }
 
-    @Override
-    public boolean isKeyJustPressed(int KEYID) {
-        if (KEYID == VK_ENTER) {
-            boolean virtualEnterPress = enterPressed;
-            enterPressed = false;
-            return virtualEnterPress;
-        }
-        return false;
-    }
-
-    @Override
-    public void clearKeys() {
-        enterPressed = false;
-        mouseJustDown = false;
-        mouseJustUp = false;
-    }
-
-    @Override
-    public int getMouseX() {
-        return mouseX;
-    }
-
-    @Override
-    public int getMouseY() {
-        return mouseY;
-    }
-
-    @Override
-    public HashSet<Integer> getMouseDown() {
-        HashSet<Integer> b = new HashSet<Integer>();
-        if (mouseDown)
-            b.add(1);
-        return b;
-    }
-
-    @Override
-    public HashSet<Integer> getMouseJustDown() {
-        HashSet<Integer> b = new HashSet<Integer>();
-        if (mouseJustDown)
-            b.add(1);
-        mouseJustDown = false;
-        return b;
-    }
-
-    @Override
-    public HashSet<Integer> getMouseJustUp() {
-        HashSet<Integer> b = new HashSet<Integer>();
-        if (mouseJustUp)
-            b.add(1);
-        mouseJustUp = false;
-        return b;
-    }
-
-    @Override
-    public boolean getMousewheelJustDown() {
-        return false;
-    }
-
-    @Override
-    public boolean getMousewheelDir() {
-        return false;
-    }
-
-    @Override
-    public String maintain(int x, int y, int width, String text) {
-        return sendMaintenanceCode(0, text);
-    }
-
-    private String sendMaintenanceCode(int i, String text) {
+    protected String sendMaintenanceCode(int i, String text) {
         MainActivity ma = MainActivity.last;
         if (ma != null)
             return ma.tco.code(i, text);
