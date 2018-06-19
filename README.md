@@ -31,5 +31,5 @@ A script like the following should suffice:
 ## Versioning
 
 This version of gabien-android is known to work with:
- - gabien-common 6863ea62a83a552582fcf91b644d6006fff3d11a
- - R48 417bb6d5a1cd8b5648bdd7cb165d42530403edd2
+ - gabien-common de0f07c03de6fc35ceca849d658d07902c5d0cc8
+ - R48 2bf16a22e609802ecf9572a32d6ca00c4784a07f

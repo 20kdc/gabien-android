@@ -21,9 +21,6 @@ public class Peripherals implements IPeripherals {
     // The parent GrInDriver. (GTHREAD)
     public GrInDriver parent;
 
-    // Used to ensure pointers get reset properly. (UITHREAD)
-    public Object gdSecurityCode;
-
     // The current offset. (GTHREAD)
     public int offsetX, offsetY;
 
@@ -74,16 +71,13 @@ public class Peripherals implements IPeripherals {
         return bv;
     }
 
-    public Object gdResetPointers() {
+    public void gdResetPointers() {
         pointersLock.lock();
         pointersMap.clear();
         pointersLock.unlock();
-        return gdSecurityCode = new Object();
     }
 
-    public void gdPushEvent(Object o, boolean mode, int pointerId, int x, int y) {
-        if (o != gdSecurityCode)
-            return;
+    public void gdPushEvent(boolean mode, int pointerId, int x, int y) {
         pointersLock.lock();
         if (!mode) {
             pointersMap.remove(pointerId);

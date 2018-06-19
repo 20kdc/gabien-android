@@ -10,8 +10,8 @@
 # now for the parts that you'll probably need to adjust
 # yes, these are my personal build settings -
 # I may replace this build process with just injecting the classes into a gradle compile somehow
-ANDROID_JAR=/home/20kdc/Documents/tools/adt-bundle-linux-x86-20140702/sdk/platforms/android-20/android.jar
-ANDROID_BT=/home/20kdc/Documents/tools/adt-bundle-linux-x86-20140702/sdk/build-tools/android-4.4W
+ANDROID_JAR=/home/gamemanj/Android/Sdk/platforms/android-24/android.jar
+ANDROID_BT=/home/gamemanj/Android/Sdk/build-tools/24.0.3
 
 cp "$6" res/drawable/icon.png
 lua compile-manifest.lua "$2" "$3" "$4" "$7" > AndroidManifest.xml

@@ -12,7 +12,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Paint;
 
-import gabien.ui.UILabel;
+import gabien.ui.IConsumer;
+import gabien.ui.WindowCreatingUIElementConsumer;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -123,10 +125,33 @@ public final class GaBIenImpl implements IGaBIEn {
         getFileObj(f).delete();
     }
 
+    @Override
+    public void startFileBrowser(String text, boolean saving, String exts, IConsumer<String> result) {
+        // Need to setup an environment for a file browser.
+        final WindowCreatingUIElementConsumer wc = new WindowCreatingUIElementConsumer();
+        // if this crashes, you're pretty doomed
+        int heightPix = MainActivity.last.mySurface.getHeight();
+        UIFileBrowser fb = new UIFileBrowser(result, text, "<-", saving ? GaBIEn.wordSave : GaBIEn.wordLoad, GaBIEn.sysCoreFontSize, GaBIEn.sysCoreFontSize);
+        wc.accept(fb);
+        final Runnable tick = new Runnable() {
+            double lastTime = GaBIEn.getTime();
+            @Override
+            public void run() {
+                double newTime = GaBIEn.getTime();
+                double dT = newTime - lastTime;
+                lastTime = newTime;
+                wc.runTick(dT);
+                if (wc.runningWindows().size() > 0)
+                    GaBIEn.pushLaterCallback(this);
+            }
+        };
+        GaBIEn.pushCallback(tick);
+    }
+
     public IGrInDriver makeGrIn(String name, int w, int h, WindowSpecs ws) {
-        if (GrInDriver.instance == null)
-        	GrInDriver.instance = new GrInDriver(w, h);
-        return GrInDriver.instance;
+        GrInDriver gd = new GrInDriver(w, h);
+        MainActivity.pushOwner(gd);
+        return gd;
     }
 
     @Override

@@ -87,7 +87,7 @@ public class TextboxImplObject {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mainActivity.setContentView(mainActivity.msv);
+                mainActivity.setContentView(mainActivity.mySurface);
             }
         });
     }
