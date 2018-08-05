@@ -126,6 +126,11 @@ public final class GaBIenImpl implements IGaBIEn {
     }
 
     @Override
+    public void setBrowserDirectory(String b) {
+        // Maybe one day.
+    }
+
+    @Override
     public void startFileBrowser(String text, boolean saving, String exts, IConsumer<String> result) {
         // Need to setup an environment for a file browser.
         final WindowCreatingUIElementConsumer wc = new WindowCreatingUIElementConsumer();
