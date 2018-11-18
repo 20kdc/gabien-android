@@ -8,6 +8,7 @@
 package gabien;
 
 import gabien.ui.IPointer;
+import gabien.ui.IFunction;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +43,8 @@ public class Peripherals implements IPeripherals {
     public void clearOffset() {
         offsetX = 0;
         offsetY = 0;
+        for (UPointer mp : pointersMap.values())
+            mp.flushOffset();
     }
 
     @Override
@@ -60,7 +63,7 @@ public class Peripherals implements IPeripherals {
     }
 
     @Override
-    public String maintain(int x, int y, int width, String text) {
+    public String maintain(int x, int y, int width, String text, IFunction<String, String> feedback) {
         return parent.sendMaintenanceCode(0, text);
     }
 
@@ -115,6 +118,11 @@ public class Peripherals implements IPeripherals {
         public void performOffset(int x, int y) {
             offsetX += x;
             offsetY += y;
+        }
+
+        private void flushOffset() {
+            offsetX = 0;
+            offsetY = 0;
         }
     }
 }
