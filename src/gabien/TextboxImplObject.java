@@ -7,23 +7,39 @@
 
 package gabien;
 
+import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import gabien.ui.IFunction;
 
 public class TextboxImplObject {
 
-    public final MainActivity mainActivity;
-    public final EditText tf;
+    private final MainActivity mainActivity;
+    private final EditText tf;
+    private final TextView tv;
+    private final LinearLayout host;
+    private IFunction<String, String> lastFeedback = null;
     public String lastKnownContents;
 
-    public boolean okay;
+    // Written on UI thread, read from MainActivity on UI thread.
+    public boolean inTextboxMode;
+
+    private boolean okay;
 
     public TextboxImplObject(MainActivity activity) {
         tf = new EditText(activity);
+        tv = new TextView(activity);
+        host = new LinearLayout(activity);
+        host.setOrientation(LinearLayout.HORIZONTAL);
+        host.addView(tf);
+        host.addView(tv);
         tf.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -47,6 +63,10 @@ public class TextboxImplObject {
                     lastKnownContents = p;
                     if (disableOkay)
                         okay = false;
+                    if (lastFeedback != null) {
+                        tv.setText(lastFeedback.apply(p));
+                        host.requestLayout();
+                    }
                 }
             }
         });
@@ -64,18 +84,30 @@ public class TextboxImplObject {
         mainActivity = activity;
     }
 
-    public void setActive(final String contents) {
+    public void setActive(final String contents, final IFunction<String, String> feedback) {
         lastKnownContents = contents;
+        lastFeedback = feedback;
         okay = true;
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 tf.setText(contents);
-                mainActivity.setContentView(tf);
+                if (lastFeedback == null) {
+                    tv.setText("");
+                } else {
+                    tv.setText(feedback.apply(contents));
+                }
+                host.requestLayout();
+                inTextboxMode = true;
+                mainActivity.setContentView(host);
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        host.requestFocus();
                         tf.requestFocus();
+                        InputMethodManager imm = (InputMethodManager) mainActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                        if (imm != null)
+                            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
                     }
                 });
             }
@@ -87,7 +119,11 @@ public class TextboxImplObject {
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                inTextboxMode = false;
                 mainActivity.setContentView(mainActivity.mySurface);
+                InputMethodManager imm = (InputMethodManager) mainActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null)
+                    imm.toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS,0);
             }
         });
     }

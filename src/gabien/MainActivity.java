@@ -122,4 +122,13 @@ public class MainActivity extends Activity implements Runnable {
 			e.printStackTrace();
 		}
 	}
+
+    @Override
+    public void onBackPressed() {
+        if (myTCO.tf.inTextboxMode) {
+            myTCO.tf.setInactive();
+        } else {
+            super.onBackPressed();
+        }
+    }
 }

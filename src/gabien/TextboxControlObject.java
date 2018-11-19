@@ -7,6 +7,8 @@
 
 package gabien;
 
+import gabien.ui.IFunction;
+
 public class TextboxControlObject {
     public final MainActivity mainActivity;
     public final TextboxImplObject tf;
@@ -26,7 +28,7 @@ public class TextboxControlObject {
     // 1: flush (expects return of non-null for enter response)
     // 2: activity check
     // 3: half-flush
-    public String code(int i, String text) {
+    public String code(int i, String text, IFunction<String, String> feedback) {
         boolean halfFlush = false;
         boolean enterPress = false;
         if (i == 0) {
@@ -36,13 +38,13 @@ public class TextboxControlObject {
             }
             if (lastMaintainText != null) {
                 if (!text.equals(lastMaintainText)) {
-                    tf.setActive(text);
+                    tf.setActive(text, feedback);
                     lastMaintainText = text;
                 } else {
                     lastMaintainText = tf.lastKnownContents;
                 }
             } else if ((tempMTO == null) && (!pendingEnter)) {
-                tf.setActive(text);
+                tf.setActive(text, feedback);
                 lastMaintainText = text;
             }
             hasMaintained = true;

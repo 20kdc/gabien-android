@@ -7,17 +7,10 @@
 
 package gabien;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicReference;
-
-
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.View.OnTouchListener;
+import gabien.ui.IFunction;
 
 public class GrInDriver extends OsbDriver implements IGrInDriver {
     protected boolean enterPressed;
@@ -37,7 +30,7 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
 
     @Override
     public boolean flush() {
-        enterPressed = enterPressed || (sendMaintenanceCode(1, null) != null);
+        enterPressed = enterPressed || (sendMaintenanceCode(1, null, null) != null);
         while (MainActivity.getCurrentOwner() == this) {
             MainActivity last = MainActivity.last;
             if (last != null) {
@@ -58,7 +51,7 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
 
                         sh.unlockCanvasAndPost(c);
                         // Has side-effects if a textbox is up
-                        if (sendMaintenanceCode(2, null) == null)
+                        if (sendMaintenanceCode(2, null, null) == null)
                             if ((r.width() != w) || (r.height() != h)) {
                                 resize(r.width(), r.height());
                                 return true;
@@ -72,7 +65,7 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
             try {
                 Thread.sleep(100);
                 // Keyboard holding things up?
-                sendMaintenanceCode(3, null);
+                sendMaintenanceCode(3, null, null);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -85,10 +78,10 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
         return peripherals;
     }
 
-    protected String sendMaintenanceCode(int i, String text) {
+    protected String sendMaintenanceCode(int i, String text, IFunction<String, String> feedback) {
         MainActivity ma = MainActivity.last;
         if (ma != null)
-            return ma.myTCO.code(i, text);
+            return ma.myTCO.code(i, text, feedback);
         return null;
     }
 

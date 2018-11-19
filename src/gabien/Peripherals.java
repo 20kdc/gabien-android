@@ -43,8 +43,10 @@ public class Peripherals implements IPeripherals {
     public void clearOffset() {
         offsetX = 0;
         offsetY = 0;
+        pointersLock.lock();
         for (UPointer mp : pointersMap.values())
             mp.flushOffset();
+        pointersLock.unlock();
     }
 
     @Override
@@ -64,7 +66,7 @@ public class Peripherals implements IPeripherals {
 
     @Override
     public String maintain(int x, int y, int width, String text, IFunction<String, String> feedback) {
-        return parent.sendMaintenanceCode(0, text);
+        return parent.sendMaintenanceCode(0, text, feedback);
     }
 
     @Override
