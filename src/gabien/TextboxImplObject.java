@@ -35,6 +35,7 @@ public class TextboxImplObject {
 
     public TextboxImplObject(MainActivity activity) {
         tf = new EditText(activity);
+        tf.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         tv = new TextView(activity);
         host = new LinearLayout(activity);
         host.setOrientation(LinearLayout.HORIZONTAL);
