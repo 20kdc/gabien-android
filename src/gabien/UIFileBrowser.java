@@ -10,6 +10,7 @@ package gabien;
 import gabien.GaBIEn;
 import gabien.ui.*;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -17,6 +18,7 @@ import java.util.LinkedList;
  * Forgot when this was made initially, but now, February 17th, 2018:
  * With this working, with text being wrapped in complex layouts, I saw everything working exactly as I had planned.
  * I'm going ahead with changing things to this.
+ * -- Note: This later (at first appearance in gabien-android) became essentially a backend support class for when native file browsers aren't available.
  */
 public class UIFileBrowser extends UIElement.UIProxy {
     private boolean done;
@@ -26,20 +28,14 @@ public class UIFileBrowser extends UIElement.UIProxy {
     private UIPublicPanel lowerSection;
     private UIElement lowerSectionContents;
     private int fontSize;
-    private LinkedList<String> pathComponents = new LinkedList<String>();
-    private String strBack, strAccept, strTP;
-    private final String extFilter;
+    private LinkedList<String> pathComponents;
+    private String strAccept, strTP;
 
-    public UIFileBrowser(IConsumer<String> r, String titlePrefix, String back, String accept, int fSize, int scrollerSize) {
-        this(r, titlePrefix, back, accept, fSize, scrollerSize, "");
-    }
-
-    public UIFileBrowser(IConsumer<String> r, String titlePrefix, String back, String accept, int fSize, int scrollerSize, String ext) {
+    public UIFileBrowser(String actPath, IConsumer<String> r, String titlePrefix, String accept, int fSize, int scrollerSize) {
         run = r;
-        extFilter = ext;
         strTP = titlePrefix;
-        strBack = back;
         strAccept = accept;
+        pathComponents = UIFileBrowser.createComponents(actPath);
         basicLayout = new UIScrollLayout(true, scrollerSize);
         lowerSection = new UIPublicPanel(1, 1) {
             @Override
@@ -63,26 +59,41 @@ public class UIFileBrowser extends UIElement.UIProxy {
         proxySetElement(outerLayout, true);
     }
 
+    public static LinkedList<String> createComponents(String browserDirectory) {
+        LinkedList<String> lls = new LinkedList<String>();
+        try {
+            browserDirectory = browserDirectory.replace('\\', '/');
+            String[] old = browserDirectory.split("/");
+            for (String s : old) {
+                if (s.equals(""))
+                    continue;
+                if (s.equals("."))
+                    continue;
+                lls.add(s);
+            }
+        } catch (Exception e) {
+            // Keep working despite resolve errors
+            e.printStackTrace();
+        }
+        return lls;
+    }
+
     // Should we show a given item, by postfix? (Point for future expansion)
-    public boolean shouldShow(boolean dir, String possiblePostfix) {
-        return dir || possiblePostfix.toLowerCase().endsWith(extFilter);
+    protected boolean shouldShow(boolean dir, String name) {
+        return true;
     }
 
     // Translates the current path components (and possibly the 'last' component, which might be null) into a system path.
-    public String getPath(String possiblePostfix) {
-        String text = "";
+    private String getPath() {
+        StringBuilder text = new StringBuilder("/");
         boolean first = true;
         for (String s : pathComponents) {
             if (!first)
-                text += "/";
-            text += s;
+                text.append('/');
             first = false;
+            text.append(s);
         }
-        if (text.equals(""))
-            text = ".";
-        if (possiblePostfix != null)
-            return text + "/" + possiblePostfix;
-        return text;
+        return text.toString();
     }
 
     private void rebuild() {
@@ -92,9 +103,9 @@ public class UIFileBrowser extends UIElement.UIProxy {
             lowerSectionContents = null;
 
         boolean showManualControl = true;
-        final String exact = getPath(null);
+        final String exact = getPath();
         String[] paths = GaBIEn.listEntries(exact);
-        basicLayout.panelsAdd(new UITextButton(strBack, fontSize, new Runnable() {
+        basicLayout.panelsAdd(new UITextButton("<-", fontSize, new Runnable() {
                 @Override
                 public void run() {
                     if (!done) {
@@ -123,7 +134,6 @@ public class UIFileBrowser extends UIElement.UIProxy {
                 }
             }
             Collections.sort(dirs);
-            dirs.addFirst("..");
             Collections.sort(fils);
             for (final String s : dirs) {
                 if (shouldShow(true, s)) {
@@ -196,6 +206,6 @@ public class UIFileBrowser extends UIElement.UIProxy {
 
     @Override
     public String toString() {
-        return strTP + getPath(null);
+        return strTP + getPath();
     }
 }

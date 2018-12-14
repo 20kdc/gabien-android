@@ -29,6 +29,10 @@ public final class GaBIenImpl implements IGaBIEn {
     public HashMap<String, IImage> ht = new HashMap<String, IImage>();
     private double lastdt = getTime();
     private RawAudioDriver rad;
+    // The prefix for all *relative* paths.
+    private String virtualCurrent = "/sdcard/";
+    // The real-world absolute path to the browser directory.
+    private String browserDirectory = virtualCurrent;
 
     public static void main() throws Exception {
         FontManager.fontsReady = true;
@@ -109,7 +113,9 @@ public final class GaBIenImpl implements IGaBIEn {
     }
 
     public File getFileObj(String fd) {
-        return new File("/sdcard/" + fd);
+        if (!fd.startsWith("/"))
+            return new File(virtualCurrent + fd);
+        return new File(fd);
     }
 
     public InputStream getFile(String FDialog) {
@@ -127,7 +133,7 @@ public final class GaBIenImpl implements IGaBIEn {
 
     @Override
     public void setBrowserDirectory(String b) {
-        // Maybe one day.
+        browserDirectory = getFileObj(b).getAbsolutePath();
     }
 
     @Override
@@ -135,8 +141,7 @@ public final class GaBIenImpl implements IGaBIEn {
         // Need to setup an environment for a file browser.
         final WindowCreatingUIElementConsumer wc = new WindowCreatingUIElementConsumer();
         // if this crashes, you're pretty doomed
-        int heightPix = MainActivity.last.mySurface.getHeight();
-        UIFileBrowser fb = new UIFileBrowser(result, text, "<-", saving ? GaBIEn.wordSave : GaBIEn.wordLoad, GaBIEn.sysCoreFontSize, GaBIEn.sysCoreFontSize);
+        UIFileBrowser fb = new UIFileBrowser(browserDirectory, result, text, saving ? GaBIEn.wordSave : GaBIEn.wordLoad, GaBIEn.sysCoreFontSize, GaBIEn.sysCoreFontSize);
         wc.accept(fb);
         final Runnable tick = new Runnable() {
             double lastTime = GaBIEn.getTime();
@@ -220,8 +225,7 @@ public final class GaBIenImpl implements IGaBIEn {
         }
     }
 
-    public boolean singleWindowApp()
-    {
+    public boolean singleWindowApp() {
     	return true;
     }
 

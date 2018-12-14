@@ -7,11 +7,7 @@
 # Just a boring releaser helper script.
 # name, package, version-name, version-code, app-staging, icon, permissions
 
-# now for the parts that you'll probably need to adjust
-# yes, these are my personal build settings -
-# I may replace this build process with just injecting the classes into a gradle compile somehow
-ANDROID_JAR=/home/gamemanj/Android/Sdk/platforms/android-24/android.jar
-ANDROID_BT=/home/gamemanj/Android/Sdk/build-tools/24.0.3
+# Expects ANDROID_JAR and ANDROID_BT as environment variables
 
 cp "$6" res/drawable/icon.png
 lua compile-manifest.lua "$2" "$3" "$4" "$7" > AndroidManifest.xml

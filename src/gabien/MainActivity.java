@@ -100,6 +100,7 @@ public class MainActivity extends Activity implements Runnable {
             if (gd.wantsShutdown) {
                 controlStack.removeLast();
                 gd = controlStack.getLast();
+                gd.peripherals.gdResetPointers();
             } else {
                 break;
             }
