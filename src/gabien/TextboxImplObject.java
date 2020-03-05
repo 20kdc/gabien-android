@@ -19,14 +19,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import gabien.ui.IFunction;
 
-public class TextboxImplObject {
+public class TextboxImplObject implements ITextboxImplementation {
 
     private final MainActivity mainActivity;
     private final EditText tf;
     private final TextView tv;
     private final LinearLayout host;
     private IFunction<String, String> lastFeedback = null;
-    public String lastKnownContents;
+    private String lastKnownContents = "";
 
     // Written on UI thread, read from MainActivity on UI thread.
     public boolean inTextboxMode;
@@ -85,6 +85,7 @@ public class TextboxImplObject {
         mainActivity = activity;
     }
 
+    @Override
     public void setActive(final String contents, final IFunction<String, String> feedback) {
         lastKnownContents = contents;
         lastFeedback = feedback;
@@ -99,7 +100,11 @@ public class TextboxImplObject {
                     tv.setText(feedback.apply(contents));
                 }
                 host.requestLayout();
+                // -- don't bother repeating this part if unnecessary --
+                if (inTextboxMode)
+                    return;
                 inTextboxMode = true;
+                System.out.println("TextBox is going active.");
                 mainActivity.setContentView(host);
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
@@ -115,22 +120,54 @@ public class TextboxImplObject {
         });
     }
 
+    @Override
     public void setInactive() {
         okay = false;
         mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (!inTextboxMode)
+                    return;
                 inTextboxMode = false;
+                System.out.println("TextBox is going inactive.");
                 mainActivity.setContentView(mainActivity.mySurface);
-                InputMethodManager imm = (InputMethodManager) mainActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null)
-                    imm.toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS,0);
             }
         });
     }
 
+    @Override
     public boolean checkupUsage() {
         return okay;
     }
+
+    @Override
+    public String getLastKnownText() {
+        return lastKnownContents;
+    }
+
+    public static ITextboxImplementation getInstance() {
+        if (MainActivity.last != null)
+            return MainActivity.last.myTIO;
+        return DEAD;
+    }
+    
+    // I am aware it's odd to have a field down here, but it's for a good cause.
+    // Used as a stand-in.
+    private static ITextboxImplementation DEAD = new ITextboxImplementation() {
+        @Override
+        public void setInactive() {
+        }
+        @Override
+        public void setActive(String contents, IFunction<String, String> feedback) {
+        }
+        @Override
+        public String getLastKnownText() {
+            return "";
+        }
+        @Override
+        public boolean checkupUsage() {
+            return false;
+        }
+    };
 }
 

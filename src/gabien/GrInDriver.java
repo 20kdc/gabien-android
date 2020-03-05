@@ -13,7 +13,6 @@ import android.view.SurfaceHolder;
 import gabien.ui.IFunction;
 
 public class GrInDriver extends OsbDriver implements IGrInDriver {
-    protected boolean enterPressed;
     public Peripherals peripherals;
     public boolean wantsShutdown = false;
     public Rect displayArea = new Rect(0, 0, 1, 1);
@@ -30,8 +29,10 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
 
     @Override
     public boolean flush() {
-        enterPressed = enterPressed || (sendMaintenanceCode(1, null, null) != null);
-        while (MainActivity.getCurrentOwner() == this) {
+        boolean first = true;
+        while (true) {
+            peripherals.gdUpdateTextbox(first);
+            first = false;
             MainActivity last = MainActivity.last;
             if (last != null) {
                 try {
@@ -50,12 +51,10 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
                         c.drawBitmap(bitmap, new Rect(0, 0, w, h), displayArea, globalPaint);
 
                         sh.unlockCanvasAndPost(c);
-                        // Has side-effects if a textbox is up
-                        if (sendMaintenanceCode(2, null, null) == null)
-                            if ((r.width() != w) || (r.height() != h)) {
-                                resize(r.width(), r.height());
-                                return true;
-                            }
+                        if ((r.width() != w) || (r.height() != h)) {
+                            resize(r.width(), r.height());
+                            return true;
+                        }
                         return false;
                     }
                 } catch (Exception e) {
@@ -64,25 +63,15 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
             }
             try {
                 Thread.sleep(100);
-                // Keyboard holding things up?
-                sendMaintenanceCode(3, null, null);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return false;
     }
 
     @Override
     public IPeripherals getPeripherals() {
         return peripherals;
-    }
-
-    protected String sendMaintenanceCode(int i, String text, IFunction<String, String> feedback) {
-        MainActivity ma = MainActivity.last;
-        if (ma != null)
-            return ma.myTCO.code(i, text, feedback);
-        return null;
     }
 
     @Override

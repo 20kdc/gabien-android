@@ -26,8 +26,11 @@ public class Peripherals implements IPeripherals {
     public int offsetX, offsetY;
 
     public ReentrantLock pointersLock = new ReentrantLock();
-    public HashSet<UPointer> pointersAppendDown = new HashSet<UPointer>();
+    public HashSet<UPointer> pointersThatWePretendDoNotExist = new HashSet<UPointer>();
     public HashMap<Integer, UPointer> pointersMap = new HashMap<Integer, UPointer>();
+    
+    private boolean enterPressed, textboxMaintainedThisFrame, textboxWasReadyAtLastCheck;
+    private String lastTextSentToTextbox;
 
     public Peripherals(GrInDriver gd) {
         parent = gd;
@@ -53,27 +56,58 @@ public class Peripherals implements IPeripherals {
     public HashSet<IPointer> getActivePointers() {
         pointersLock.lock();
         HashSet<IPointer> r = new HashSet<IPointer>(pointersMap.values());
-        r.addAll(pointersAppendDown);
-        pointersAppendDown.clear();
+        r.removeAll(pointersThatWePretendDoNotExist);
         pointersLock.unlock();
         return r;
     }
 
     @Override
     public void clearKeys() {
-        parent.enterPressed = false;
+        enterPressed = false;
+        pointersLock.lock();
+        pointersThatWePretendDoNotExist.addAll(pointersMap.values());
+        pointersLock.unlock();
     }
 
     @Override
     public String maintain(int x, int y, int width, String text, IFunction<String, String> feedback) {
-        return parent.sendMaintenanceCode(0, text, feedback);
+        ITextboxImplementation impl = TextboxImplObject.getInstance();
+        if ((lastTextSentToTextbox == null) || (!lastTextSentToTextbox.equals(text))) {
+            impl.setActive(text, feedback);
+            lastTextSentToTextbox = text;
+            textboxWasReadyAtLastCheck = true;
+        }
+        textboxMaintainedThisFrame = true;
+        return impl.getLastKnownText();
     }
 
     @Override
     public boolean isEnterJustPressed() {
-        boolean bv = parent.enterPressed;
-        parent.enterPressed = false;
+        boolean bv = enterPressed;
+        enterPressed = false;
         return bv;
+    }
+    
+    public void gdUpdateTextbox(boolean flushing) {
+        if (flushing) {
+            if (textboxMaintainedThisFrame) {
+                textboxMaintainedThisFrame = false;
+            } else {
+                // textbox expired
+                if (lastTextSentToTextbox != null) {
+                    TextboxImplObject.getInstance().setInactive();
+                    lastTextSentToTextbox = null;
+                }
+            }
+        }
+        // detect specifically the *event* of textbox closure, but do not actually
+        //  mark the textbox as unmaintained because this would cause it to be re-opened
+        if (!TextboxImplObject.getInstance().checkupUsage()) {
+            if (textboxWasReadyAtLastCheck) {
+                textboxWasReadyAtLastCheck = false;
+                enterPressed = true;
+            }
+        }
     }
 
     public void gdResetPointers() {
@@ -85,13 +119,14 @@ public class Peripherals implements IPeripherals {
     public void gdPushEvent(boolean mode, int pointerId, int x, int y) {
         pointersLock.lock();
         if (!mode) {
-            pointersMap.remove(pointerId);
+            UPointer ptr = pointersMap.remove(pointerId);
+            if (ptr != null)
+                pointersThatWePretendDoNotExist.remove(ptr);
         } else {
             UPointer up = pointersMap.get(pointerId);
             if (up == null) {
                 up = new UPointer();
                 pointersMap.put(pointerId, up);
-                pointersAppendDown.add(up);
             }
             up.actualX = x;
             up.actualY = y;

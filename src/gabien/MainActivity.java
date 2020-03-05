@@ -19,12 +19,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MainActivity extends Activity implements Runnable {
 	public static Thread gameThread = null;
+	public static GrInDriver theMainWindow = new GrInDriver(800,  600);
 	public static MainActivity last; // W:UITHREAD R:GTHREAD
 
-    private static LinkedList<GrInDriver> controlStack = new LinkedList<GrInDriver>();
-    private static ReentrantLock controlStackLock = new ReentrantLock();
-
-	public TextboxControlObject myTCO;
+	public TextboxImplObject myTIO;
     public SurfaceView mySurface;
 
     @Override
@@ -35,38 +33,31 @@ public class MainActivity extends Activity implements Runnable {
         surfaceview.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View arg0, MotionEvent arg1) {
-                controlStackLock.lock();
-                if (controlStack.size() == 0) {
-                    controlStackLock.unlock();
-                    return true;
-                }
-                GrInDriver currentOwner = controlStack.getLast();
                 int acto = arg1.getAction();
                 int act = (acto & MotionEvent.ACTION_MASK);
                 // ACTION_POINTER_INDEX_MASK
                 int ptrI = (acto >> 8) & 0xFF;
                 switch (act) {
                     case MotionEvent.ACTION_DOWN:
-                        mapToArea(currentOwner, true, arg1, 0);
+                        mapToArea(theMainWindow, true, arg1, 0);
                         break;
                     case MotionEvent.ACTION_POINTER_DOWN:
-                        mapToArea(currentOwner, true, arg1, ptrI);
+                        mapToArea(theMainWindow, true, arg1, ptrI);
                         break;
                     case MotionEvent.ACTION_MOVE:
                         for (int i = 0; i < arg1.getPointerCount(); i++)
-                            mapToArea(currentOwner, true, arg1, i);
+                            mapToArea(theMainWindow, true, arg1, i);
                         break;
                     case MotionEvent.ACTION_POINTER_UP:
-                        mapToArea(currentOwner, false, arg1, ptrI);
+                        mapToArea(theMainWindow, false, arg1, ptrI);
                         break;
                     // Sent "when the last pointer leaves the screen".
                     // I hope you aren't lying.
                     case MotionEvent.ACTION_UP:
-                        mapToArea(currentOwner, false, arg1, 0);
-                        currentOwner.peripherals.gdResetPointers();
+                        mapToArea(theMainWindow, false, arg1, 0);
+                        theMainWindow.peripherals.gdResetPointers();
                         break;
                 }
-                controlStackLock.unlock();
                 return true;
             }
 
@@ -83,7 +74,7 @@ public class MainActivity extends Activity implements Runnable {
             }
         });
 		setContentView(surfaceview);
-		myTCO = new TextboxControlObject(this);
+		myTIO = new TextboxImplObject(this);
 		mySurface = surfaceview;
 		if (gameThread == null) {
 			gameThread = new Thread(this);
@@ -91,31 +82,6 @@ public class MainActivity extends Activity implements Runnable {
 		}
 		last = this;
 	}
-
-    public static GrInDriver getCurrentOwner() {
-        controlStackLock.lock();
-        GrInDriver gd = null;
-        while (controlStack.size() > 0) {
-            gd = controlStack.getLast();
-            if (gd.wantsShutdown) {
-                controlStack.removeLast();
-                gd = controlStack.getLast();
-                gd.peripherals.gdResetPointers();
-            } else {
-                break;
-            }
-        }
-        controlStackLock.unlock();
-        return gd;
-    }
-
-    public static void pushOwner(GrInDriver igd) {
-        controlStackLock.lock();
-        if (controlStack.size() > 0)
-            controlStack.getLast().peripherals.gdResetPointers();
-        controlStack.add(igd);
-        controlStackLock.unlock();
-    }
 
     @Override
 	public void run() {
@@ -128,8 +94,8 @@ public class MainActivity extends Activity implements Runnable {
 
     @Override
     public void onBackPressed() {
-        if (myTCO.tf.inTextboxMode) {
-            myTCO.tf.setInactive();
+        if (myTIO.inTextboxMode) {
+            myTIO.setInactive();
         } else {
             super.onBackPressed();
         }

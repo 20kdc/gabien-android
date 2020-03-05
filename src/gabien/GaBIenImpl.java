@@ -11,7 +11,9 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Paint;
-
+import gabien.backendhelp.EmulatedFileBrowser;
+import gabien.backendhelp.UIFileBrowser;
+import gabien.backendhelp.WindowMux;
 import gabien.ui.IConsumer;
 import gabien.ui.WindowCreatingUIElementConsumer;
 
@@ -29,16 +31,24 @@ public final class GaBIenImpl implements IGaBIEn {
     public HashMap<String, IImage> ht = new HashMap<String, IImage>();
     private double lastdt = getTime();
     private RawAudioDriver rad;
+
     // The prefix for all *relative* paths.
     private String virtualCurrent = "/sdcard/";
-    // The real-world absolute path to the browser directory.
-    private String browserDirectory = virtualCurrent;
 
     public static void main() throws Exception {
         FontManager.fontsReady = true;
-    	GaBIEn.internal = new GaBIenImpl();
+        final GaBIenImpl impl = new GaBIenImpl();
+    	GaBIEn.internal = impl;
+    	GaBIEn.internalWindowing = new WindowMux(MainActivity.theMainWindow);
+    	GaBIEn.internalFileBrowser = new EmulatedFileBrowser() {
+    	    @Override
+    	    public void setBrowserDirectory(String s) {
+    	        super.setBrowserDirectory(impl.getFileObj(s).getAbsolutePath());
+    	    }
+    	};
     	Class.forName("gabienapp.Application").getDeclaredMethod("gabienmain").invoke(null);
     }
+    
     public double getTime() {
         return (System.currentTimeMillis() - startup) / 1000.0d;
     }
@@ -132,48 +142,8 @@ public final class GaBIenImpl implements IGaBIEn {
     }
 
     @Override
-    public void setBrowserDirectory(String b) {
-        browserDirectory = getFileObj(b).getAbsolutePath();
-    }
-
-    @Override
-    public void startFileBrowser(String text, boolean saving, String exts, IConsumer<String> result) {
-        // Need to setup an environment for a file browser.
-        final WindowCreatingUIElementConsumer wc = new WindowCreatingUIElementConsumer();
-        // if this crashes, you're pretty doomed
-        UIFileBrowser fb = new UIFileBrowser(browserDirectory, result, text, saving ? GaBIEn.wordSave : GaBIEn.wordLoad, GaBIEn.sysCoreFontSize, GaBIEn.sysCoreFontSize);
-        wc.accept(fb);
-        final Runnable tick = new Runnable() {
-            double lastTime = GaBIEn.getTime();
-            @Override
-            public void run() {
-                double newTime = GaBIEn.getTime();
-                double dT = newTime - lastTime;
-                lastTime = newTime;
-                wc.runTick(dT);
-                if (wc.runningWindows().size() > 0)
-                    GaBIEn.pushLaterCallback(this);
-            }
-        };
-        GaBIEn.pushCallback(tick);
-    }
-
-    public IGrInDriver makeGrIn(String name, int w, int h, WindowSpecs ws) {
-        GrInDriver gd = new GrInDriver(w, h);
-        MainActivity.pushOwner(gd);
-        return gd;
-    }
-
-    @Override
     public IGrDriver makeOffscreenBuffer(int w, int h, boolean alpha) {
         return new OsbDriver(w, h, alpha);
-    }
-
-    @Override
-    public WindowSpecs defaultWindowSpecs(String name, int w, int h) {
-        WindowSpecs ws = new WindowSpecs();
-        ws.scale = 1;
-        return ws;
     }
 
     private IImage getImageInternal(String a, boolean res, String id, boolean ck, int i) {
