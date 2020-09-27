@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.view.SurfaceHolder;
 import gabien.ui.IFunction;
+import r48.FontSizes;
 
 public class GrInDriver extends OsbDriver implements IGrInDriver {
     public Peripherals peripherals;
@@ -80,4 +81,8 @@ public class GrInDriver extends OsbDriver implements IGrInDriver {
         wantsShutdown = true;
     }
 
+    @Override
+    public int estimateUIScaleTenths() {
+        return Math.max(10, Math.min(w, h) / 30);
+    }
 }
