@@ -1,3 +1,5 @@
+# Repository archived as has been merged with gabien-common
+
 # gabien-android
 
 ## Description
